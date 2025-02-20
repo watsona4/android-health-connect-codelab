@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.units.Mass
 import androidx.lifecycle.ViewModel
@@ -39,6 +40,7 @@ class InputReadingsViewModel(private val healthConnectManager: HealthConnectMana
   val permissions = setOf(
     HealthPermission.getReadPermission(WeightRecord::class),
     HealthPermission.getWritePermission(WeightRecord::class),
+    HealthPermission.getReadPermission(BodyFatRecord::class),
   )
   var weeklyAvg: MutableState<Mass?> = mutableStateOf(Mass.kilograms(0.0))
     private set
@@ -46,7 +48,10 @@ class InputReadingsViewModel(private val healthConnectManager: HealthConnectMana
   var permissionsGranted = mutableStateOf(false)
     private set
 
-  var readingsList: MutableState<List<WeightRecord>> = mutableStateOf(listOf())
+  var weightList: MutableState<List<WeightRecord>> = mutableStateOf(listOf())
+    private set
+
+  var bodyFatList: MutableState<List<BodyFatRecord>> = mutableStateOf(listOf())
     private set
 
   var uiState: UiState by mutableStateOf(UiState.Uninitialized)
@@ -58,6 +63,7 @@ class InputReadingsViewModel(private val healthConnectManager: HealthConnectMana
     viewModelScope.launch {
       tryWithPermissionsCheck {
         readWeightInputs()
+        readBodyFatInputs()
       }
     }
   }
@@ -67,6 +73,7 @@ class InputReadingsViewModel(private val healthConnectManager: HealthConnectMana
       tryWithPermissionsCheck {
         healthConnectManager.writeWeightInput(inputValue)
         readWeightInputs()
+        readBodyFatInputs()
       }
     }
   }
@@ -75,9 +82,14 @@ class InputReadingsViewModel(private val healthConnectManager: HealthConnectMana
     val startOfDay = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS)
     val now = Instant.now()
     val endofWeek = startOfDay.toInstant().plus(7, ChronoUnit.DAYS)
-    readingsList.value = healthConnectManager.readWeightInputs(startOfDay.toInstant(), now)
+    weightList.value = healthConnectManager.readWeightInputs(Instant.ofEpochSecond(0), now)
     weeklyAvg.value =
       healthConnectManager.computeWeeklyAverage(startOfDay.toInstant(), endofWeek)
+  }
+
+  private suspend fun readBodyFatInputs() {
+    val now = Instant.now()
+    bodyFatList.value = healthConnectManager.readBodyFatInputs(Instant.ofEpochSecond(0), now)
   }
 
   /**

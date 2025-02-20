@@ -162,7 +162,8 @@ fun HealthConnectNavigation(
         )
       )
       val permissionsGranted by viewModel.permissionsGranted
-      val readingsList by viewModel.readingsList
+      val weightList by viewModel.weightList
+      val bodyFatList by viewModel.bodyFatList
       val permissions = viewModel.permissions
       val weeklyAvg by viewModel.weeklyAvg
       val onPermissionsResult = { viewModel.initialLoad() }
@@ -179,7 +180,8 @@ fun HealthConnectNavigation(
           viewModel.inputReadings(weightInput)
         },
         weeklyAvg = weeklyAvg,
-        readingsList = readingsList,
+        weightList = weightList,
+        bodyFatList = bodyFatList,
         onError = { exception ->
           showExceptionSnackbar(scaffoldState, scope, exception)
         },

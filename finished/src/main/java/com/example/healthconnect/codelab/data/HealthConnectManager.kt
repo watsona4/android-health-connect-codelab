@@ -26,6 +26,7 @@ import androidx.health.connect.client.HealthConnectFeatures
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.changes.Change
 import androidx.health.connect.client.feature.ExperimentalFeatureAvailabilityApi
+import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.Record
@@ -136,6 +137,18 @@ class HealthConnectManager(private val context: Context) {
     )
     val response = healthConnectClient.aggregate(request)
     return response[WeightRecord.WEIGHT_AVG]
+  }
+
+  /**
+   * TODO: Reads in existing [BodyFatRecord]s.
+   */
+  suspend fun readBodyFatInputs(start: Instant, end: Instant): List<BodyFatRecord> {
+    val request = ReadRecordsRequest(
+      recordType = BodyFatRecord::class,
+      timeRangeFilter = TimeRangeFilter.between(start, end)
+    )
+    val response = healthConnectClient.readRecords(request)
+    return response.records
   }
 
   /**

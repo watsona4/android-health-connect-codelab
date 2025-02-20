@@ -42,8 +42,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.units.Mass
+import androidx.health.connect.client.units.Percentage
 import com.example.healthconnect.codelab.R
 import com.example.healthconnect.codelab.data.dateTimeWithOffsetOrDefault
 import com.example.healthconnect.codelab.presentation.theme.HealthConnectTheme
@@ -52,11 +54,13 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.UUID
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InputReadingsScreen(
     permissions: Set<String>,
     permissionsGranted: Boolean,
-    readingsList: List<WeightRecord>,
+    weightList: List<WeightRecord>,
+    bodyFatList: List<BodyFatRecord>,
     uiState: InputReadingsViewModel.UiState,
     onInsertClick: (Double) -> Unit = {},
     onError: (Throwable?) -> Unit = {},
@@ -153,7 +157,7 @@ fun InputReadingsScreen(
             color = MaterialTheme.colors.primary
           )
         }
-        items(readingsList) { reading ->
+        items(weightList) { reading ->
           Row(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
@@ -164,6 +168,21 @@ fun InputReadingsScreen(
               dateTimeWithOffsetOrDefault(reading.time, reading.zoneOffset)
             Text(
               text = "${reading.weight}" + " ",
+            )
+            Text(text = formatter.format(zonedDateTime))
+          }
+        }
+        items(bodyFatList) { reading ->
+          Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+          ) {
+            // show local date and time
+            val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+            val zonedDateTime =
+              dateTimeWithOffsetOrDefault(reading.time, reading.zoneOffset)
+            Text(
+              text = "${reading.percentage}" + " ",
             )
             Text(text = formatter.format(zonedDateTime))
           }
@@ -194,7 +213,7 @@ fun InputReadingsScreenPreview() {
       permissions = setOf(),
       weeklyAvg = Mass.kilograms(54.5),
       permissionsGranted = true,
-      readingsList = listOf(
+      weightList = listOf(
         WeightRecord(
           weight = Mass.kilograms(54.0),
           time = inputTime,
@@ -202,6 +221,18 @@ fun InputReadingsScreenPreview() {
         ),
         WeightRecord(
           weight = Mass.kilograms(55.0),
+          time = inputTime,
+          zoneOffset = null
+        )
+      ),
+      bodyFatList = listOf(
+        BodyFatRecord(
+          percentage = Percentage(42.0),
+          time = inputTime,
+          zoneOffset = null
+        ),
+        BodyFatRecord(
+          percentage = Percentage(38.0),
           time = inputTime,
           zoneOffset = null
         )
