@@ -64,7 +64,7 @@ fun DrawerItem(
 fun DrawerItemPreview() {
   HealthConnectTheme {
     DrawerItem(
-      item = Screen.ExerciseSessions,
+      item = Screen.InputReadings,
       selected = true,
       onItemClick = {}
     )
