@@ -43,16 +43,7 @@ fun HealthConnectNavigation(
   scaffoldState: ScaffoldState,
 ) {
   val scope = rememberCoroutineScope()
-  NavHost(navController = navController, startDestination = Screen.WelcomeScreen.route) {
-    val availability by healthConnectManager.availability
-    composable(Screen.WelcomeScreen.route) {
-      WelcomeScreen(
-        healthConnectAvailability = availability,
-        onResumeAvailabilityCheck = {
-          healthConnectManager.checkAvailability()
-        }
-      )
-    }
+  NavHost(navController = navController, startDestination = Screen.InputReadings.route) {
     composable(Screen.InputReadings.route) {
       val viewModel: InputReadingsViewModel = viewModel(
         factory = InputReadingsViewModelFactory(
