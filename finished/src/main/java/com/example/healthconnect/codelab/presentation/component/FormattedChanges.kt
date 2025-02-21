@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.health.connect.client.changes.Change
 import androidx.health.connect.client.changes.DeletionChange
 import androidx.health.connect.client.changes.UpsertionChange
+import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
@@ -120,6 +121,14 @@ fun FormattedUpsertionChange(change: UpsertionChange) {
             FormattedChangeRow(
                 startTime = dateTimeWithOffsetOrDefault(weight.time, weight.zoneOffset),
                 recordType = stringResource(R.string.differential_changes_type_weight),
+                dataSource = change.record.metadata.dataOrigin.packageName
+            )
+        }
+        is BodyFatRecord -> {
+            val percentage = change.record as BodyFatRecord
+            FormattedChangeRow(
+                startTime = dateTimeWithOffsetOrDefault(percentage.time, percentage.zoneOffset),
+                recordType = stringResource(R.string.differential_changes_type_body_fat),
                 dataSource = change.record.metadata.dataOrigin.packageName
             )
         }

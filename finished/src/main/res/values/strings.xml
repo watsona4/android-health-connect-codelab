@@ -133,6 +133,7 @@
   <string name="differential_changes_type_sleep_stage">Sleep stage</string>
   <string name="differential_changes_type_distance">Distance</string>
   <string name="differential_changes_type_weight">Weight</string>
+  <string name="differential_changes_type_body_fat">Body Fat</string>
 
   <!-- Health Connect settings -->
   <string name="settings">Settings</string>
