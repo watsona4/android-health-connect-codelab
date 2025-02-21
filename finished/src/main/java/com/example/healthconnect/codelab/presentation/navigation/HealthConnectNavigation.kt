@@ -64,10 +64,6 @@ fun HealthConnectNavigation(
       InputReadingsScreen(
         permissionsGranted = permissionsGranted,
         permissions = permissions,
-        changesEnabled = changesToken != null,
-        onChangesEnable = { enabled ->
-          viewModel.enableOrDisableChanges(enabled)
-        },
         changes = viewModel.changes,
         changesToken = changesToken,
         onGetChanges = {

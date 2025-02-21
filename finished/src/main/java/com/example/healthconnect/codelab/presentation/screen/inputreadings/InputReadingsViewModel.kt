@@ -17,17 +17,19 @@ package com.example.healthconnect.codelab.presentation.screen.inputreadings
 
 import android.content.ContentValues
 import android.os.RemoteException
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.health.connect.client.changes.Change
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.work.Logger
 import com.example.healthconnect.codelab.data.HealthConnectManager
 import com.example.healthconnect.codelab.data.PostManager
 import kotlinx.coroutines.launch
@@ -35,9 +37,6 @@ import org.json.JSONObject
 import java.io.IOException
 import java.time.Instant
 import java.util.UUID
-import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
-import androidx.health.connect.client.changes.Change
 
 val PUBLISH_URL = "http://192.168.1.5:8568"
 
@@ -73,6 +72,7 @@ class InputReadingsViewModel(
   fun initialLoad() {
     viewModelScope.launch {
       tryWithPermissionsCheck {
+        changesToken.value = healthConnectManager.getChangesToken()
         readWeightInputs()
         readBodyFatInputs()
         publishWeightData()
@@ -110,19 +110,6 @@ class InputReadingsViewModel(
       { success -> Log.i(TAG, success) },
       { error -> Log.i(TAG, error) }
     )
-  }
-
-  fun enableOrDisableChanges(enable: Boolean) {
-    if (enable) {
-      viewModelScope.launch {
-        tryWithPermissionsCheck {
-          changesToken.value = healthConnectManager.getChangesToken()
-          Log.i(ContentValues.TAG, "Token: ${changesToken.value}")
-        }
-      }
-    } else {
-      changesToken.value = null
-    }
   }
 
   fun getChanges() {
