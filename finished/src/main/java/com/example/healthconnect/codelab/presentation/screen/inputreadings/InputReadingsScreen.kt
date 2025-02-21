@@ -18,7 +18,6 @@ package com.example.healthconnect.codelab.presentation.screen.inputreadings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
@@ -31,14 +30,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.health.connect.client.changes.Change
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.WeightRecord
 import com.example.healthconnect.codelab.R
 import com.example.healthconnect.codelab.data.dateTimeWithOffsetOrDefault
-import com.example.healthconnect.codelab.presentation.component.FormattedChange
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.UUID
@@ -49,9 +45,6 @@ fun InputReadingsScreen(
     permissionsGranted: Boolean,
     weightList: List<WeightRecord>,
     bodyFatList: List<BodyFatRecord>,
-    onGetChanges: () -> Unit,
-    changes: List<Change>,
-    changesToken: String?,
     uiState: InputReadingsViewModel.UiState,
     onError: (Throwable?) -> Unit = {},
     onPermissionsResult: () -> Unit = {},
@@ -85,27 +78,6 @@ fun InputReadingsScreen(
           }
         }
       } else {
-        item {
-          val token = changesToken ?: stringResource(id = R.string.not_available_abbrev)
-          Text(stringResource(id = R.string.differential_changes_current_token, token))
-        }
-        item {
-          Button(
-            modifier = Modifier.padding(8.dp),
-            enabled = changesToken != null,
-            onClick = onGetChanges
-          ) {
-            Text(stringResource(R.string.differential_changes_button_text))
-          }
-        }
-        items(changes) { changeItem ->
-          FormattedChange(changeItem)
-        }
-        if (changes.isEmpty()) {
-          item {
-            Text(stringResource(R.string.differential_changes_empty))
-          }
-        }
         item {
           Text(
             text = stringResource(id = R.string.previous_readings),

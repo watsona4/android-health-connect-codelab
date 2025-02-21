@@ -58,12 +58,6 @@ class InputReadingsViewModel(
   var bodyFatList: MutableState<List<BodyFatRecord>> = mutableStateOf(listOf())
     private set
 
-  var changesToken: MutableState<String?> = mutableStateOf(null)
-    private set
-
-  var changes = mutableStateListOf<Change>()
-    private set
-
   var uiState: UiState by mutableStateOf(UiState.Uninitialized)
     private set
 
@@ -72,7 +66,6 @@ class InputReadingsViewModel(
   fun initialLoad() {
     viewModelScope.launch {
       tryWithPermissionsCheck {
-        changesToken.value = healthConnectManager.getChangesToken()
         readWeightInputs()
         readBodyFatInputs()
         publishWeightData()
@@ -110,27 +103,6 @@ class InputReadingsViewModel(
       { success -> Log.i(TAG, success) },
       { error -> Log.i(TAG, error) }
     )
-  }
-
-  fun getChanges() {
-    viewModelScope.launch {
-      tryWithPermissionsCheck {
-        changesToken.value?.let { token ->
-          changes.clear()
-          healthConnectManager.getChanges(token).collect { message ->
-            when (message) {
-              is HealthConnectManager.ChangesMessage.ChangeList -> {
-                changes.addAll(message.changes)
-              }
-              is HealthConnectManager.ChangesMessage.NoMoreChanges -> {
-                changesToken.value = message.nextChangesToken
-                Log.i(ContentValues.TAG, "Updating changes token: ${changesToken.value}")
-              }
-            }
-          }
-        }
-      }
-    }
   }
 
   private suspend fun tryWithPermissionsCheck(block: suspend () -> Unit) {

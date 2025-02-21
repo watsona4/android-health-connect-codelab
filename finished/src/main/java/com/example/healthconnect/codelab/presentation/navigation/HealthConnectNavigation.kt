@@ -26,7 +26,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.healthconnect.codelab.data.HealthConnectManager
 import com.example.healthconnect.codelab.data.PostManager
-import com.example.healthconnect.codelab.presentation.screen.WelcomeScreen
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsScreen
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsViewModel
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsViewModelFactory
@@ -51,7 +50,6 @@ fun HealthConnectNavigation(
           postManager = postManager
         )
       )
-      val changesToken by viewModel.changesToken
       val permissionsGranted by viewModel.permissionsGranted
       val weightList by viewModel.weightList
       val bodyFatList by viewModel.bodyFatList
@@ -64,11 +62,6 @@ fun HealthConnectNavigation(
       InputReadingsScreen(
         permissionsGranted = permissionsGranted,
         permissions = permissions,
-        changes = viewModel.changes,
-        changesToken = changesToken,
-        onGetChanges = {
-          viewModel.getChanges()
-        },
         uiState = viewModel.uiState,
         weightList = weightList,
         bodyFatList = bodyFatList,
