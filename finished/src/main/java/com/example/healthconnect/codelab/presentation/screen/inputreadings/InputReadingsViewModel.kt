@@ -15,39 +15,41 @@
  */
 package com.example.healthconnect.codelab.presentation.screen.inputreadings
 
-import android.os.RemoteException
 import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.WeightRecord
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import com.example.healthconnect.codelab.data.HealthConnectManager
 import com.example.healthconnect.codelab.data.PostManager
-import kotlinx.coroutines.launch
+import com.example.healthconnect.codelab.presentation.MainActivity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
-import java.io.IOException
 import java.time.Instant
 import java.util.UUID
 
 val PUBLISH_URL = "http://192.168.1.5:8568"
 
 class InputReadingsViewModel(
+  private val activity: MainActivity,
   private val healthConnectManager: HealthConnectManager,
   private val postManager : PostManager
-) :
-  ViewModel() {
+) {
+
   val permissions = setOf(
     HealthPermission.getReadPermission(WeightRecord::class),
     HealthPermission.getReadPermission(BodyFatRecord::class),
   )
-  var permissionsGranted = mutableStateOf(false)
-    private set
+
+  val requestPermission =
+    activity.registerForActivityResult(
+      PermissionController.createRequestPermissionResultContract()
+    ) {}
 
   var weightList: MutableState<List<WeightRecord>> = mutableStateOf(listOf())
     private set
@@ -55,20 +57,16 @@ class InputReadingsViewModel(
   var bodyFatList: MutableState<List<BodyFatRecord>> = mutableStateOf(listOf())
     private set
 
-  var uiState: UiState by mutableStateOf(UiState.Uninitialized)
-    private set
+  init {
+    requestPermission.launch(permissions)
+    runBlocking { run() }
+  }
 
-  val permissionsLauncher = healthConnectManager.requestPermissionsActivityContract()
-
-  fun initialLoad() {
-    viewModelScope.launch {
-      tryWithPermissionsCheck {
-        readWeightInputs()
-        readBodyFatInputs()
-        publishWeightData()
-        publishBodyFatData()
-      }
-    }
+  suspend fun run() {
+      readWeightInputs()
+      readBodyFatInputs()
+      publishWeightData()
+      publishBodyFatData()
   }
 
   private suspend fun readWeightInputs() {
@@ -102,48 +100,7 @@ class InputReadingsViewModel(
     )
   }
 
-  private suspend fun tryWithPermissionsCheck(block: suspend () -> Unit) {
-    permissionsGranted.value = healthConnectManager.hasAllPermissions(permissions)
-    uiState = try {
-      if (permissionsGranted.value) {
-        block()
-      }
-      UiState.Done
-    } catch (remoteException: RemoteException) {
-      UiState.Error(remoteException)
-    } catch (securityException: SecurityException) {
-      UiState.Error(securityException)
-    } catch (ioException: IOException) {
-      UiState.Error(ioException)
-    } catch (illegalStateException: IllegalStateException) {
-      UiState.Error(illegalStateException)
-    }
-  }
-
-  sealed class UiState {
-    object Uninitialized : UiState()
-    object Done : UiState()
-
-    data class Error(val exception: Throwable, val uuid: UUID = UUID.randomUUID()) : UiState()
-  }
-
   companion object {
     private val TAG: String = InputReadingsViewModel::class.java.simpleName
-  }
-}
-
-class InputReadingsViewModelFactory(
-  private val healthConnectManager: HealthConnectManager,
-  private val postManager: PostManager,
-) : ViewModelProvider.Factory {
-  override fun <T : ViewModel> create(modelClass: Class<T>): T {
-    if (modelClass.isAssignableFrom(InputReadingsViewModel::class.java)) {
-      @Suppress("UNCHECKED_CAST")
-      return InputReadingsViewModel(
-        healthConnectManager = healthConnectManager,
-        postManager = postManager,
-      ) as T
-    }
-    throw IllegalArgumentException("Unknown ViewModel class")
   }
 }

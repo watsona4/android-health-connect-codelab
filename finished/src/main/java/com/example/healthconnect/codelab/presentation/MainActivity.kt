@@ -15,9 +15,20 @@
  */
 package com.example.healthconnect.codelab.presentation
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.compose.runtime.mutableStateOf
+import androidx.work.Constraints
+import androidx.work.CoroutineWorker
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
+import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsViewModel
+import java.time.Duration
 
 /**
  * The entry point into the sample.
@@ -28,12 +39,30 @@ class MainActivity : ComponentActivity() {
 
     val healthConnectManager = (application as BaseApplication).healthConnectManager
     val postManager = (application as BaseApplication).postManager
+    val inputReadingsViewModel = InputReadingsViewModel(
+      activity = this,
+      healthConnectManager = healthConnectManager,
+      postManager = postManager
+    )
 
-    setContent {
-      HealthConnectApp(
-        healthConnectManager = healthConnectManager,
-        postManager = postManager
-      )
+    class InputWorker(context: Context, workerParameters: WorkerParameters) :
+      CoroutineWorker(context, workerParameters) {
+      override suspend fun doWork(): Result {
+        inputReadingsViewModel.run()
+        return Result.success()
+      }
     }
+
+    val workConstraints = Constraints.Builder()
+      .setRequiredNetworkType(NetworkType.UNMETERED)
+      .build()
+
+    val workRequest = PeriodicWorkRequestBuilder<InputWorker>(Duration.ofMinutes(15))
+      .setConstraints(workConstraints)
+      .build()
+
+    val workManager = WorkManager.getInstance(this)
+
+    workManager.enqueue(workRequest)
   }
 }

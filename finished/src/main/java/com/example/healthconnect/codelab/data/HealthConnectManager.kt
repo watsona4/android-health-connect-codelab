@@ -96,8 +96,8 @@ class HealthConnectManager(private val context: Context) {
    * Convenience function to reuse code for reading data.
    */
   private suspend inline fun <reified T : Record> readData(
-    timeRangeFilter: TimeRangeFilter,
-    dataOriginFilter: Set<DataOrigin> = setOf(),
+      timeRangeFilter: TimeRangeFilter,
+      dataOriginFilter: Set<DataOrigin> = setOf(),
   ): List<T> {
     val request = ReadRecordsRequest(
       recordType = T::class,
