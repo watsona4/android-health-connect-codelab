@@ -54,7 +54,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.UUID
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InputReadingsScreen(
     permissions: Set<String>,
@@ -62,10 +61,8 @@ fun InputReadingsScreen(
     weightList: List<WeightRecord>,
     bodyFatList: List<BodyFatRecord>,
     uiState: InputReadingsViewModel.UiState,
-    onInsertClick: (Double) -> Unit = {},
     onError: (Throwable?) -> Unit = {},
     onPermissionsResult: () -> Unit = {},
-    weeklyAvg: Mass?,
     onPermissionsLaunch: (Set<String>) -> Unit = {},
 ) {
 
@@ -89,16 +86,6 @@ fun InputReadingsScreen(
     }
   }
 
-  var weightInput by remember { mutableStateOf("") }
-
-  // Check if the input value is a valid weight
-  fun hasValidDoubleInRange(weight: String): Boolean {
-    val tempVal = weight.toDoubleOrNull()
-    return if (tempVal == null) {
-      false
-    } else tempVal <= 1000
-  }
-
   if (uiState != InputReadingsViewModel.UiState.Uninitialized) {
     LazyColumn(
       modifier = Modifier.fillMaxSize(),
@@ -115,42 +102,6 @@ fun InputReadingsScreen(
         }
       } else {
         item {
-          OutlinedTextField(
-            value = weightInput,
-            onValueChange = {
-              weightInput = it
-            },
-
-            label = {
-              Text(stringResource(id = R.string.weight_input))
-            },
-            isError = !hasValidDoubleInRange(weightInput),
-            keyboardActions = KeyboardActions { !hasValidDoubleInRange(weightInput) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-          )
-          if (!hasValidDoubleInRange(weightInput)) {
-            Text(
-              text = stringResource(id = R.string.valid_weight_error_message),
-              color = MaterialTheme.colors.error,
-              style = MaterialTheme.typography.caption,
-              modifier = Modifier.padding(start = 16.dp)
-            )
-          }
-
-          Button(
-            enabled = hasValidDoubleInRange(weightInput),
-            onClick = {
-              onInsertClick(weightInput.toDouble())
-              // clear TextField when new weight is entered
-              weightInput = ""
-            },
-
-            modifier = Modifier.fillMaxHeight()
-
-          ) {
-            Text(text = stringResource(id = R.string.add_readings_button))
-          }
-
           Text(
             text = stringResource(id = R.string.previous_readings),
             fontSize = 24.sp,
@@ -187,18 +138,6 @@ fun InputReadingsScreen(
             Text(text = formatter.format(zonedDateTime))
           }
         }
-        item {
-          Text(
-            text = stringResource(id = R.string.weekly_avg), fontSize = 24.sp,
-            color = MaterialTheme.colors.primary,
-            modifier = Modifier.padding(vertical = 20.dp)
-          )
-          if (weeklyAvg == null) {
-            Text(text = "0.0" + stringResource(id = R.string.kilograms))
-          } else {
-            Text(text = "$weeklyAvg".take(5) + stringResource(id = R.string.kilograms))
-          }
-        }
       }
     }
   }
@@ -211,7 +150,6 @@ fun InputReadingsScreenPreview() {
   HealthConnectTheme(darkTheme = false) {
     InputReadingsScreen(
       permissions = setOf(),
-      weeklyAvg = Mass.kilograms(54.5),
       permissionsGranted = true,
       weightList = listOf(
         WeightRecord(

@@ -30,16 +30,9 @@ import com.example.healthconnect.codelab.presentation.screen.WelcomeScreen
 import com.example.healthconnect.codelab.presentation.screen.changes.DifferentialChangesScreen
 import com.example.healthconnect.codelab.presentation.screen.changes.DifferentialChangesViewModel
 import com.example.healthconnect.codelab.presentation.screen.changes.DifferentialChangesViewModelFactory
-import com.example.healthconnect.codelab.presentation.screen.exercisesession.ExerciseSessionScreen
-import com.example.healthconnect.codelab.presentation.screen.exercisesession.ExerciseSessionViewModel
-import com.example.healthconnect.codelab.presentation.screen.exercisesession.ExerciseSessionViewModelFactory
-import com.example.healthconnect.codelab.presentation.screen.exercisesessiondetail.ExerciseSessionDetailScreen
-import com.example.healthconnect.codelab.presentation.screen.exercisesessiondetail.ExerciseSessionDetailViewModel
-import com.example.healthconnect.codelab.presentation.screen.exercisesessiondetail.ExerciseSessionDetailViewModelFactory
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsScreen
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsViewModel
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsViewModelFactory
-import com.example.healthconnect.codelab.presentation.screen.privacypolicy.PrivacyPolicyScreen
 import com.example.healthconnect.codelab.showExceptionSnackbar
 
 /**
@@ -72,7 +65,6 @@ fun HealthConnectNavigation(
       val weightList by viewModel.weightList
       val bodyFatList by viewModel.bodyFatList
       val permissions = viewModel.permissions
-      val weeklyAvg by viewModel.weeklyAvg
       val onPermissionsResult = { viewModel.initialLoad() }
       val permissionsLauncher =
         rememberLauncherForActivityResult(viewModel.permissionsLauncher) {
@@ -83,10 +75,6 @@ fun HealthConnectNavigation(
         permissions = permissions,
 
         uiState = viewModel.uiState,
-        onInsertClick = { weightInput ->
-          viewModel.inputReadings(weightInput)
-        },
-        weeklyAvg = weeklyAvg,
         weightList = weightList,
         bodyFatList = bodyFatList,
         onError = { exception ->

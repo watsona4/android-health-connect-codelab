@@ -27,26 +27,12 @@ import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.changes.Change
 import androidx.health.connect.client.feature.ExperimentalFeatureAvailabilityApi
 import androidx.health.connect.client.records.BodyFatRecord
-import androidx.health.connect.client.records.ExerciseSessionRecord
-import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.Record
-import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.records.metadata.DataOrigin
-import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ChangesTokenRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
-import androidx.health.connect.client.units.Energy
-import androidx.health.connect.client.units.Mass
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import com.example.healthconnect.codelab.workers.ReadStepWorker
-import java.io.IOException
-import java.time.Instant
-import java.time.ZonedDateTime
-import kotlin.random.Random
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import java.util.concurrent.TimeUnit
@@ -97,25 +83,6 @@ class HealthConnectManager(private val context: Context) {
   }
 
   /**
-   * TODO: Writes [WeightRecord] to Health Connect.
-   */
-  suspend fun writeWeightInput(weightInput: Double) {
-    val time = ZonedDateTime.now().withNano(0)
-    val weightRecord = WeightRecord(
-      weight = Mass.kilograms(weightInput),
-      time = time.toInstant(),
-      zoneOffset = time.offset
-    )
-    val records = listOf(weightRecord)
-    try {
-      healthConnectClient.insertRecords(records)
-      Toast.makeText(context, "Successfully insert records", Toast.LENGTH_SHORT).show()
-    } catch (e: Exception) {
-      Toast.makeText(context, e.message.toString(), Toast.LENGTH_SHORT).show()
-    }
-  }
-
-  /**
    * TODO: Reads in existing [WeightRecord]s.
    */
   suspend fun readWeightInputs(start: Instant, end: Instant): List<WeightRecord> {
@@ -125,18 +92,6 @@ class HealthConnectManager(private val context: Context) {
     )
     val response = healthConnectClient.readRecords(request)
     return response.records
-  }
-
-  /**
-   * TODO: Returns the weekly average of [WeightRecord]s.
-   */
-  suspend fun computeWeeklyAverage(start: Instant, end: Instant): Mass? {
-    val request = AggregateRequest(
-      metrics = setOf(WeightRecord.WEIGHT_AVG),
-      timeRangeFilter = TimeRangeFilter.between(start, end)
-    )
-    val response = healthConnectClient.aggregate(request)
-    return response[WeightRecord.WEIGHT_AVG]
   }
 
   /**
@@ -152,135 +107,14 @@ class HealthConnectManager(private val context: Context) {
   }
 
   /**
-   * TODO: Obtains a list of [ExerciseSessionRecord]s in a specified time frame. An Exercise Session Record is a
-   * period of time given to an activity, that would make sense to a user, e.g. "Afternoon run"
-   * etc. It does not necessarily mean, however, that the user was *running* for that entire time,
-   * more that conceptually, this was the activity being undertaken.
-   */
-  suspend fun readExerciseSessions(start: Instant, end: Instant): List<ExerciseSessionRecord> {
-    val request = ReadRecordsRequest(
-      recordType = ExerciseSessionRecord::class,
-      timeRangeFilter = TimeRangeFilter.between(start, end)
-    )
-    val response = healthConnectClient.readRecords(request)
-    return response.records
-  }
-
-  /**
-   * TODO: Writes an [ExerciseSessionRecord] to Health Connect.
-   */
-  suspend fun writeExerciseSession(start: ZonedDateTime, end: ZonedDateTime) {
-    healthConnectClient.insertRecords(
-      listOf(
-        ExerciseSessionRecord(
-          startTime = start.toInstant(),
-          startZoneOffset = start.offset,
-          endTime = end.toInstant(),
-          endZoneOffset = end.offset,
-          exerciseType = ExerciseSessionRecord.EXERCISE_TYPE_RUNNING,
-          title = "My Run #${Random.nextInt(0, 60)}"
-        ),
-        StepsRecord(
-          startTime = start.toInstant(),
-          startZoneOffset = start.offset,
-          endTime = end.toInstant(),
-          endZoneOffset = end.offset,
-          count = (1000 + 1000 * Random.nextInt(3)).toLong()
-        ),
-        TotalCaloriesBurnedRecord(
-          startTime = start.toInstant(),
-          startZoneOffset = start.offset,
-          endTime = end.toInstant(),
-          endZoneOffset = end.offset,
-          energy = Energy.calories((140 + Random.nextInt(20)) * 0.01)
-        )
-      ) + buildHeartRateSeries(start, end)
-    )
-  }
-
-  /**
-   * TODO: Build [HeartRateRecord].
-   */
-  private fun buildHeartRateSeries(
-    sessionStartTime: ZonedDateTime,
-    sessionEndTime: ZonedDateTime,
-  ): HeartRateRecord {
-    val samples = mutableListOf<HeartRateRecord.Sample>()
-    var time = sessionStartTime
-    while (time.isBefore(sessionEndTime)) {
-      samples.add(
-        HeartRateRecord.Sample(
-          time = time.toInstant(),
-          beatsPerMinute = (80 + Random.nextInt(80)).toLong()
-        )
-      )
-      time = time.plusSeconds(30)
-    }
-    return HeartRateRecord(
-      startTime = sessionStartTime.toInstant(),
-      startZoneOffset = sessionStartTime.offset,
-      endTime = sessionEndTime.toInstant(),
-      endZoneOffset = sessionEndTime.offset,
-      samples = samples
-    )
-  }
-
-  /**
-   * TODO: Reads aggregated data and raw data for selected data types, for a given [ExerciseSessionRecord].
-   */
-  suspend fun readAssociatedSessionData(
-      uid: String,
-  ): ExerciseSessionData {
-    val exerciseSession = healthConnectClient.readRecord(ExerciseSessionRecord::class, uid)
-    // Use the start time and end time from the session, for reading raw and aggregate data.
-    val timeRangeFilter = TimeRangeFilter.between(
-      startTime = exerciseSession.record.startTime,
-      endTime = exerciseSession.record.endTime
-    )
-    val aggregateDataTypes = setOf(
-      ExerciseSessionRecord.EXERCISE_DURATION_TOTAL,
-      StepsRecord.COUNT_TOTAL,
-      TotalCaloriesBurnedRecord.ENERGY_TOTAL,
-      HeartRateRecord.BPM_AVG,
-      HeartRateRecord.BPM_MAX,
-      HeartRateRecord.BPM_MIN,
-    )
-    // Limit the data read to just the application that wrote the session. This may or may not
-    // be desirable depending on the use case: In some cases, it may be useful to combine with
-    // data written by other apps.
-    val dataOriginFilter = setOf(exerciseSession.record.metadata.dataOrigin)
-    val aggregateRequest = AggregateRequest(
-      metrics = aggregateDataTypes,
-      timeRangeFilter = timeRangeFilter,
-      dataOriginFilter = dataOriginFilter
-    )
-    val aggregateData = healthConnectClient.aggregate(aggregateRequest)
-    val heartRateData = readData<HeartRateRecord>(timeRangeFilter, dataOriginFilter)
-
-    return ExerciseSessionData(
-      uid = uid,
-      totalActiveTime = aggregateData[ExerciseSessionRecord.EXERCISE_DURATION_TOTAL],
-      totalSteps = aggregateData[StepsRecord.COUNT_TOTAL],
-      totalEnergyBurned = aggregateData[TotalCaloriesBurnedRecord.ENERGY_TOTAL],
-      minHeartRate = aggregateData[HeartRateRecord.BPM_MIN],
-      maxHeartRate = aggregateData[HeartRateRecord.BPM_MAX],
-      avgHeartRate = aggregateData[HeartRateRecord.BPM_AVG],
-      heartRateSeries = heartRateData,
-    )
-  }
-
-  /**
    * Obtains a changes token for the specified record types.
    */
   suspend fun getChangesToken(): String {
     return healthConnectClient.getChangesToken(
       ChangesTokenRequest(
         setOf(
-          ExerciseSessionRecord::class,
-          StepsRecord::class,
-          TotalCaloriesBurnedRecord::class,
-          HeartRateRecord::class,
-          WeightRecord::class
+          WeightRecord::class,
+          BodyFatRecord::class
         )
       )
     )
@@ -305,16 +139,6 @@ class HealthConnectManager(private val context: Context) {
       nextChangesToken = response.nextChangesToken
     } while (response.hasMore)
     emit(ChangesMessage.NoMoreChanges(nextChangesToken))
-  }
-
-  /**
-   * Enqueue the ReadStepWorker
-   */
-  fun enqueueReadStepWorker(){
-    val readRequest = OneTimeWorkRequestBuilder<ReadStepWorker>()
-      .setInitialDelay(10, TimeUnit.SECONDS)
-      .build()
-    WorkManager.getInstance(context).enqueue(readRequest)
   }
 
   /**

@@ -23,15 +23,12 @@ import androidx.compose.runtime.setValue
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.WeightRecord
-import androidx.health.connect.client.units.Mass
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.healthconnect.codelab.data.HealthConnectManager
 import java.io.IOException
 import java.time.Instant
-import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlinx.coroutines.launch
 
@@ -39,12 +36,8 @@ class InputReadingsViewModel(private val healthConnectManager: HealthConnectMana
   ViewModel() {
   val permissions = setOf(
     HealthPermission.getReadPermission(WeightRecord::class),
-    HealthPermission.getWritePermission(WeightRecord::class),
     HealthPermission.getReadPermission(BodyFatRecord::class),
   )
-  var weeklyAvg: MutableState<Mass?> = mutableStateOf(Mass.kilograms(0.0))
-    private set
-
   var permissionsGranted = mutableStateOf(false)
     private set
 

@@ -25,11 +25,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.health.connect.client.changes.Change
 import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.ExerciseSessionRecord
-import androidx.health.connect.client.records.HeartRateRecord
-import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.records.TotalCaloriesBurnedRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.health.connect.client.records.BodyFatRecord
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -42,11 +39,8 @@ class DifferentialChangesViewModel(private val healthConnectManager: HealthConne
     ViewModel() {
 
     private val changesDataTypes = setOf(
-        ExerciseSessionRecord::class,
-        StepsRecord::class,
-        TotalCaloriesBurnedRecord::class,
-        HeartRateRecord::class,
-        WeightRecord::class
+        WeightRecord::class,
+        BodyFatRecord::class
     )
 
     val permissions = changesDataTypes.map { HealthPermission.getReadPermission(it) }.toSet()
