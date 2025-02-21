@@ -24,8 +24,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.navDeepLink
 import com.example.healthconnect.codelab.data.HealthConnectManager
+import com.example.healthconnect.codelab.data.PostManager
 import com.example.healthconnect.codelab.presentation.screen.WelcomeScreen
 import com.example.healthconnect.codelab.presentation.screen.changes.DifferentialChangesScreen
 import com.example.healthconnect.codelab.presentation.screen.changes.DifferentialChangesViewModel
@@ -42,6 +42,7 @@ import com.example.healthconnect.codelab.showExceptionSnackbar
 fun HealthConnectNavigation(
   navController: NavHostController,
   healthConnectManager: HealthConnectManager,
+  postManager: PostManager,
   scaffoldState: ScaffoldState,
 ) {
   val scope = rememberCoroutineScope()
@@ -58,7 +59,8 @@ fun HealthConnectNavigation(
     composable(Screen.InputReadings.route) {
       val viewModel: InputReadingsViewModel = viewModel(
         factory = InputReadingsViewModelFactory(
-          healthConnectManager = healthConnectManager
+          healthConnectManager = healthConnectManager,
+          postManager = postManager
         )
       )
       val permissionsGranted by viewModel.permissionsGranted

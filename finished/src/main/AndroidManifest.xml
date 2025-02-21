@@ -17,6 +17,7 @@
   <uses-permission android:name="android.permission.health.READ_BODY_FAT"/>
   <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
   <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
+  <uses-permission android:name="android.permission.INTERNET" />
 
   <application
       android:allowBackup="true"
@@ -25,7 +26,8 @@
       android:name="com.example.healthconnect.codelab.presentation.BaseApplication"
       android:roundIcon="@mipmap/ic_launcher_round"
       android:supportsRtl="true"
-      android:theme="@style/Theme.HealthConnect">
+      android:theme="@style/Theme.HealthConnect"
+      android:networkSecurityConfig="@xml/network_security_config">
     <activity
         android:name="com.example.healthconnect.codelab.presentation.MainActivity"
         android:exported="true"

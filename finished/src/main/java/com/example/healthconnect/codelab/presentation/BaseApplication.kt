@@ -17,9 +17,13 @@ package com.example.healthconnect.codelab.presentation
 
 import android.app.Application
 import com.example.healthconnect.codelab.data.HealthConnectManager
+import com.example.healthconnect.codelab.data.PostManager
 
 class BaseApplication : Application() {
   val healthConnectManager by lazy {
     HealthConnectManager(this)
+  }
+  val postManager by lazy {
+    PostManager(this)
   }
 }

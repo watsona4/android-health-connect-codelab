@@ -35,6 +35,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.healthconnect.codelab.R
 import com.example.healthconnect.codelab.data.HealthConnectAvailability
 import com.example.healthconnect.codelab.data.HealthConnectManager
+import com.example.healthconnect.codelab.data.PostManager
 import com.example.healthconnect.codelab.presentation.navigation.Drawer
 import com.example.healthconnect.codelab.presentation.navigation.HealthConnectNavigation
 import com.example.healthconnect.codelab.presentation.navigation.Screen
@@ -45,7 +46,9 @@ const val TAG = "Health Connect Codelab"
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun HealthConnectApp(healthConnectManager: HealthConnectManager) {
+fun HealthConnectApp(healthConnectManager: HealthConnectManager,
+                     postManager: PostManager
+) {
   HealthConnectTheme {
     val scaffoldState = rememberScaffoldState()
     val navController = rememberNavController()
@@ -100,6 +103,7 @@ fun HealthConnectApp(healthConnectManager: HealthConnectManager) {
     ) {
       HealthConnectNavigation(
         healthConnectManager = healthConnectManager,
+        postManager = postManager,
         navController = navController,
         scaffoldState = scaffoldState
       )
