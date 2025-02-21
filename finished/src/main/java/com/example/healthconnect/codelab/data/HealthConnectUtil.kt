@@ -15,7 +15,6 @@
  */
 package com.example.healthconnect.codelab.data
 
-import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -33,16 +32,3 @@ fun dateTimeWithOffsetOrDefault(time: Instant, offset: ZoneOffset?): ZonedDateTi
   } else {
     ZonedDateTime.ofInstant(time, ZoneId.systemDefault())
   }
-
-fun Duration.formatTime() = String.format(
-  "%02d:%02d:%02d",
-  this.toHours() % 24,
-  this.toMinutes() % 60,
-  this.seconds % 60
-)
-
-fun Duration.formatHoursMinutes() = String.format(
-  "%01dh%02dm",
-  this.toHours() % 24,
-  this.toMinutes() % 60
-)

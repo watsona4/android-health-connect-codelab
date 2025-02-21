@@ -55,9 +55,9 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun Drawer(
-    scope: CoroutineScope,
-    scaffoldState: ScaffoldState,
-    navController: NavController,
+  scope: CoroutineScope,
+  scaffoldState: ScaffoldState,
+  navController: NavController,
 ) {
   val navBackStackEntry by navController.currentBackStackEntryAsState()
   val currentRoute = navBackStackEntry?.destination?.route
@@ -69,21 +69,7 @@ fun Drawer(
     ) {
       Image(
         modifier = Modifier
-            .width(96.dp)
-            .clickable {
-                navController.navigate(Screen.WelcomeScreen.route) {
-                    navController.graph.startDestinationRoute?.let { route ->
-                        popUpTo(route) {
-                            saveState = true
-                        }
-                    }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-                scope.launch {
-                    scaffoldState.drawerState.close()
-                }
-            },
+          .width(96.dp),
         painter = painterResource(id = R.drawable.ic_health_connect_logo),
         contentDescription = stringResource(id = R.string.health_connect_logo)
       )
@@ -119,16 +105,16 @@ fun Drawer(
     Spacer(modifier = Modifier.height(16.dp))
     Row(
       modifier = Modifier
-          .fillMaxWidth()
-          .clickable(
-              onClick = {
-                  val settingsIntent = Intent()
-                  settingsIntent.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
-                  activity.startActivity(settingsIntent)
-              }
-          )
-          .height(48.dp)
-          .padding(start = 16.dp),
+        .fillMaxWidth()
+        .clickable(
+          onClick = {
+            val settingsIntent = Intent()
+            settingsIntent.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
+            activity.startActivity(settingsIntent)
+          }
+        )
+        .height(48.dp)
+        .padding(start = 16.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
       Text(

@@ -39,34 +39,34 @@ fun DrawerItem(
     selected: Boolean,
     onItemClick: (Screen) -> Unit,
 ) {
-  Row(
-    modifier = Modifier
-        .fillMaxWidth()
-        .clickable(onClick = { onItemClick(item) })
-        .height(48.dp)
-        .padding(start = 16.dp),
-    verticalAlignment = Alignment.CenterVertically
-  ) {
-    Text(
-      text = stringResource(item.titleId),
-      style = MaterialTheme.typography.h5,
-      color = if (selected) {
-        MaterialTheme.colors.primary
-      } else {
-        MaterialTheme.colors.onBackground
-      }
-    )
-  }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = { onItemClick(item) })
+            .height(48.dp)
+            .padding(start = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(item.titleId),
+            style = MaterialTheme.typography.h5,
+            color = if (selected) {
+                MaterialTheme.colors.primary
+            } else {
+                MaterialTheme.colors.onBackground
+            }
+        )
+    }
 }
 
 @Preview
 @Composable
 fun DrawerItemPreview() {
-  HealthConnectTheme {
-    DrawerItem(
-      item = Screen.InputReadings,
-      selected = true,
-      onItemClick = {}
-    )
-  }
+    HealthConnectTheme {
+        DrawerItem(
+            item = Screen.InputReadings,
+            selected = true,
+            onItemClick = {}
+        )
+    }
 }

@@ -17,8 +17,6 @@ package com.example.healthconnect.codelab.presentation.navigation
 
 import com.example.healthconnect.codelab.R
 
-const val UID_NAV_ARGUMENT = "uid"
-
 /**
  * Represent all Screens in the app.
  *
@@ -28,7 +26,5 @@ const val UID_NAV_ARGUMENT = "uid"
  *     all screens in the navigation graph are intended to be directly reached from the menu).
  */
 enum class Screen(val route: String, val titleId: Int, val hasMenuItem: Boolean = true) {
-  WelcomeScreen("welcome_screen", R.string.welcome_screen, false),
   InputReadings("input_readings", R.string.input_readings),
-  PrivacyPolicy("privacy_policy", R.string.privacy_policy, false)
 }

@@ -42,8 +42,6 @@ import com.example.healthconnect.codelab.presentation.navigation.Screen
 import com.example.healthconnect.codelab.presentation.theme.HealthConnectTheme
 import kotlinx.coroutines.launch
 
-const val TAG = "Health Connect Codelab"
-
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun HealthConnectApp(healthConnectManager: HealthConnectManager,

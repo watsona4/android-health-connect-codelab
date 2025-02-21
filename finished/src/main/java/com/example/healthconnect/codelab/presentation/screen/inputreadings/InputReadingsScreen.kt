@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -41,14 +40,14 @@ import java.util.UUID
 
 @Composable
 fun InputReadingsScreen(
-    permissions: Set<String>,
-    permissionsGranted: Boolean,
-    weightList: List<WeightRecord>,
-    bodyFatList: List<BodyFatRecord>,
-    uiState: InputReadingsViewModel.UiState,
-    onError: (Throwable?) -> Unit = {},
-    onPermissionsResult: () -> Unit = {},
-    onPermissionsLaunch: (Set<String>) -> Unit = {},
+  permissions: Set<String>,
+  permissionsGranted: Boolean,
+  weightList: List<WeightRecord>,
+  bodyFatList: List<BodyFatRecord>,
+  uiState: InputReadingsViewModel.UiState,
+  onError: (Throwable?) -> Unit = {},
+  onPermissionsResult: () -> Unit = {},
+  onPermissionsLaunch: (Set<String>) -> Unit = {},
 ) {
 
   val errorId = rememberSaveable { mutableStateOf(UUID.randomUUID()) }
@@ -70,50 +69,67 @@ fun InputReadingsScreen(
       horizontalAlignment = Alignment.CenterHorizontally,
     ) {
       if (!permissionsGranted) {
-        item {
-          Button(
-            onClick = { onPermissionsLaunch(permissions) }
-          ) {
-            Text(text = stringResource(R.string.permissions_button_label))
-          }
-        }
-      } else {
-        item {
+        onPermissionsLaunch(permissions)
+      }
+      item {
+        Text(
+          text = stringResource(id = R.string.previous_readings),
+          fontSize = 24.sp,
+          color = MaterialTheme.colors.primary
+        )
+      }
+      item {
+        Text(
+          text = stringResource(id = R.string.weight_readings),
+          fontSize = 18.sp,
+          color = MaterialTheme.colors.secondary
+        )
+      }
+      items(weightList) { reading ->
+        Row(
+          horizontalArrangement = Arrangement.SpaceEvenly,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          // show local date and time
+          val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+          val zonedDateTime =
+            dateTimeWithOffsetOrDefault(reading.time, reading.zoneOffset)
           Text(
-            text = stringResource(id = R.string.previous_readings),
-            fontSize = 24.sp,
-            color = MaterialTheme.colors.primary
+            text = "${reading.weight}" + " ",
           )
+          Text(text = formatter.format(zonedDateTime))
         }
-        items(weightList) { reading ->
-          Row(
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-          ) {
-            // show local date and time
-            val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
-            val zonedDateTime =
-              dateTimeWithOffsetOrDefault(reading.time, reading.zoneOffset)
-            Text(
-              text = "${reading.weight}" + " ",
-            )
-            Text(text = formatter.format(zonedDateTime))
-          }
+      }
+      if (weightList.isEmpty()) {
+        item {
+          Text(stringResource(R.string.weight_readings_empty))
         }
-        items(bodyFatList) { reading ->
-          Row(
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-          ) {
-            // show local date and time
-            val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
-            val zonedDateTime =
-              dateTimeWithOffsetOrDefault(reading.time, reading.zoneOffset)
-            Text(
-              text = "${reading.percentage}" + " ",
-            )
-            Text(text = formatter.format(zonedDateTime))
-          }
+      }
+      item {
+        Text(
+          text = stringResource(id = R.string.body_fat_readings),
+          fontSize = 18.sp,
+          color = MaterialTheme.colors.secondary
+        )
+      }
+      items(bodyFatList) { reading ->
+        Row(
+          horizontalArrangement = Arrangement.SpaceEvenly,
+          verticalAlignment = Alignment.CenterVertically
+        ) {
+          // show local date and time
+          val formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
+          val zonedDateTime =
+            dateTimeWithOffsetOrDefault(reading.time, reading.zoneOffset)
+          Text(
+            text = "${reading.percentage}" + " ",
+          )
+          Text(text = formatter.format(zonedDateTime))
+        }
+      }
+      if (bodyFatList.isEmpty()) {
+        item {
+          Text(stringResource(R.string.body_fat_readings_empty))
         }
       }
     }
