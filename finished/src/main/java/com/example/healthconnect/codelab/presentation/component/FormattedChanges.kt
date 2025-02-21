@@ -62,60 +62,6 @@ fun FormattedChange(change: Change) {
 @Composable
 fun FormattedUpsertionChange(change: UpsertionChange) {
     when (change.record) {
-        is ExerciseSessionRecord -> {
-            val activity = change.record as ExerciseSessionRecord
-            FormattedChangeRow(
-                startTime = dateTimeWithOffsetOrDefault(
-                    activity.startTime,
-                    activity.startZoneOffset
-                ),
-                recordType = stringResource(R.string.differential_changes_type_exercise_session),
-                dataSource = change.record.metadata.dataOrigin.packageName
-            )
-        }
-        is StepsRecord -> {
-            val steps = change.record as StepsRecord
-            FormattedChangeRow(
-                startTime = dateTimeWithOffsetOrDefault(steps.startTime, steps.startZoneOffset),
-                recordType = stringResource(R.string.differential_changes_type_steps),
-                dataSource = change.record.metadata.dataOrigin.packageName
-            )
-        }
-        is SpeedRecord -> {
-            val speed = change.record as SpeedRecord
-            FormattedChangeRow(
-                startTime = dateTimeWithOffsetOrDefault(speed.startTime, speed.startZoneOffset),
-                recordType = stringResource(R.string.differential_changes_type_speed_series),
-                dataSource = change.record.metadata.dataOrigin.packageName
-            )
-        }
-        is HeartRateRecord -> {
-            val hr = change.record as HeartRateRecord
-            FormattedChangeRow(
-                startTime = dateTimeWithOffsetOrDefault(hr.startTime, hr.startZoneOffset),
-                recordType = stringResource(R.string.differential_changes_type_heart_rate_series),
-                dataSource = change.record.metadata.dataOrigin.packageName
-            )
-        }
-        is TotalCaloriesBurnedRecord -> {
-            val calories = change.record as TotalCaloriesBurnedRecord
-            FormattedChangeRow(
-                startTime = dateTimeWithOffsetOrDefault(
-                    calories.startTime,
-                    calories.startZoneOffset
-                ),
-                recordType = stringResource(R.string.differential_changes_type_total_calories),
-                dataSource = change.record.metadata.dataOrigin.packageName
-            )
-        }
-        is SleepSessionRecord -> {
-            val sleep = change.record as SleepSessionRecord
-            FormattedChangeRow(
-                startTime = dateTimeWithOffsetOrDefault(sleep.startTime, sleep.startZoneOffset),
-                recordType = stringResource(R.string.differential_changes_type_sleep_session),
-                dataSource = change.record.metadata.dataOrigin.packageName
-            )
-        }
         is WeightRecord -> {
             val weight = change.record as WeightRecord
             FormattedChangeRow(
@@ -129,17 +75,6 @@ fun FormattedUpsertionChange(change: UpsertionChange) {
             FormattedChangeRow(
                 startTime = dateTimeWithOffsetOrDefault(percentage.time, percentage.zoneOffset),
                 recordType = stringResource(R.string.differential_changes_type_body_fat),
-                dataSource = change.record.metadata.dataOrigin.packageName
-            )
-        }
-        is DistanceRecord -> {
-            val distance = change.record as DistanceRecord
-            FormattedChangeRow(
-                startTime = dateTimeWithOffsetOrDefault(
-                    distance.startTime,
-                    distance.startZoneOffset
-                ),
-                recordType = stringResource(R.string.differential_changes_type_distance),
                 dataSource = change.record.metadata.dataOrigin.packageName
             )
         }
