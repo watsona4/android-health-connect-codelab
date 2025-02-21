@@ -27,9 +27,6 @@ import androidx.navigation.compose.composable
 import com.example.healthconnect.codelab.data.HealthConnectManager
 import com.example.healthconnect.codelab.data.PostManager
 import com.example.healthconnect.codelab.presentation.screen.WelcomeScreen
-import com.example.healthconnect.codelab.presentation.screen.changes.DifferentialChangesScreen
-import com.example.healthconnect.codelab.presentation.screen.changes.DifferentialChangesViewModel
-import com.example.healthconnect.codelab.presentation.screen.changes.DifferentialChangesViewModelFactory
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsScreen
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsViewModel
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsViewModelFactory
@@ -63,6 +60,7 @@ fun HealthConnectNavigation(
           postManager = postManager
         )
       )
+      val changesToken by viewModel.changesToken
       val permissionsGranted by viewModel.permissionsGranted
       val weightList by viewModel.weightList
       val bodyFatList by viewModel.bodyFatList
@@ -75,7 +73,15 @@ fun HealthConnectNavigation(
       InputReadingsScreen(
         permissionsGranted = permissionsGranted,
         permissions = permissions,
-
+        changesEnabled = changesToken != null,
+        onChangesEnable = { enabled ->
+          viewModel.enableOrDisableChanges(enabled)
+        },
+        changes = viewModel.changes,
+        changesToken = changesToken,
+        onGetChanges = {
+          viewModel.getChanges()
+        },
         uiState = viewModel.uiState,
         weightList = weightList,
         bodyFatList = bodyFatList,
@@ -88,42 +94,6 @@ fun HealthConnectNavigation(
         onPermissionsLaunch = { values ->
           permissionsLauncher.launch(values)
         }
-      )
-    }
-    composable(Screen.DifferentialChanges.route) {
-      val viewModel: DifferentialChangesViewModel = viewModel(
-        factory = DifferentialChangesViewModelFactory(
-          healthConnectManager = healthConnectManager
-        )
-      )
-      val changesToken by viewModel.changesToken
-      val permissionsGranted by viewModel.permissionsGranted
-      val permissions = viewModel.permissions
-      val onPermissionsResult = {viewModel.initialLoad()}
-      val permissionsLauncher =
-        rememberLauncherForActivityResult(viewModel.permissionsLauncher) {
-          onPermissionsResult()}
-      DifferentialChangesScreen(
-        permissionsGranted = permissionsGranted,
-        permissions = permissions,
-        changesEnabled = changesToken != null,
-        onChangesEnable = { enabled ->
-          viewModel.enableOrDisableChanges(enabled)
-        },
-        changes = viewModel.changes,
-        changesToken = changesToken,
-        onGetChanges = {
-          viewModel.getChanges()
-        },
-        uiState = viewModel.uiState,
-        onError = { exception ->
-          showExceptionSnackbar(scaffoldState, scope, exception)
-        },
-        onPermissionsResult = {
-          viewModel.initialLoad()
-        },
-        onPermissionsLaunch = { values ->
-          permissionsLauncher.launch(values)}
       )
     }
   }

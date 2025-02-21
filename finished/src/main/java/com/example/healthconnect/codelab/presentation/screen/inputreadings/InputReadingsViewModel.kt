@@ -15,6 +15,7 @@
  */
 package com.example.healthconnect.codelab.presentation.screen.inputreadings
 
+import android.content.ContentValues
 import android.os.RemoteException
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -35,6 +36,8 @@ import java.io.IOException
 import java.time.Instant
 import java.util.UUID
 import android.util.Log
+import androidx.compose.runtime.mutableStateListOf
+import androidx.health.connect.client.changes.Change
 
 val PUBLISH_URL = "http://192.168.1.5:8568"
 
@@ -54,6 +57,12 @@ class InputReadingsViewModel(
     private set
 
   var bodyFatList: MutableState<List<BodyFatRecord>> = mutableStateOf(listOf())
+    private set
+
+  var changesToken: MutableState<String?> = mutableStateOf(null)
+    private set
+
+  var changes = mutableStateListOf<Change>()
     private set
 
   var uiState: UiState by mutableStateOf(UiState.Uninitialized)
@@ -101,6 +110,40 @@ class InputReadingsViewModel(
       { success -> Log.i(TAG, success) },
       { error -> Log.i(TAG, error) }
     )
+  }
+
+  fun enableOrDisableChanges(enable: Boolean) {
+    if (enable) {
+      viewModelScope.launch {
+        tryWithPermissionsCheck {
+          changesToken.value = healthConnectManager.getChangesToken()
+          Log.i(ContentValues.TAG, "Token: ${changesToken.value}")
+        }
+      }
+    } else {
+      changesToken.value = null
+    }
+  }
+
+  fun getChanges() {
+    viewModelScope.launch {
+      tryWithPermissionsCheck {
+        changesToken.value?.let { token ->
+          changes.clear()
+          healthConnectManager.getChanges(token).collect { message ->
+            when (message) {
+              is HealthConnectManager.ChangesMessage.ChangeList -> {
+                changes.addAll(message.changes)
+              }
+              is HealthConnectManager.ChangesMessage.NoMoreChanges -> {
+                changesToken.value = message.nextChangesToken
+                Log.i(ContentValues.TAG, "Updating changes token: ${changesToken.value}")
+              }
+            }
+          }
+        }
+      }
+    }
   }
 
   private suspend fun tryWithPermissionsCheck(block: suspend () -> Unit) {

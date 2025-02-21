@@ -30,6 +30,5 @@ const val UID_NAV_ARGUMENT = "uid"
 enum class Screen(val route: String, val titleId: Int, val hasMenuItem: Boolean = true) {
   WelcomeScreen("welcome_screen", R.string.welcome_screen, false),
   InputReadings("input_readings", R.string.input_readings),
-  DifferentialChanges("differential_changes", R.string.differential_changes),
   PrivacyPolicy("privacy_policy", R.string.privacy_policy, false)
 }

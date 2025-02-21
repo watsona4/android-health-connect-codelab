@@ -17,39 +17,30 @@ package com.example.healthconnect.codelab.presentation.screen.inputreadings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.health.connect.client.changes.Change
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.WeightRecord
-import androidx.health.connect.client.units.Mass
-import androidx.health.connect.client.units.Percentage
 import com.example.healthconnect.codelab.R
 import com.example.healthconnect.codelab.data.dateTimeWithOffsetOrDefault
-import com.example.healthconnect.codelab.presentation.theme.HealthConnectTheme
-import java.time.Instant
+import com.example.healthconnect.codelab.presentation.component.FormattedChange
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.UUID
@@ -60,26 +51,23 @@ fun InputReadingsScreen(
     permissionsGranted: Boolean,
     weightList: List<WeightRecord>,
     bodyFatList: List<BodyFatRecord>,
+    changesEnabled: Boolean,
+    onChangesEnable: (Boolean) -> Unit,
+    onGetChanges: () -> Unit,
+    changes: List<Change>,
+    changesToken: String?,
     uiState: InputReadingsViewModel.UiState,
     onError: (Throwable?) -> Unit = {},
     onPermissionsResult: () -> Unit = {},
     onPermissionsLaunch: (Set<String>) -> Unit = {},
 ) {
 
-  // Remember the last error ID, such that it is possible to avoid re-launching the error
-  // notification for the same error when the screen is recomposed, or configuration changes etc.
   val errorId = rememberSaveable { mutableStateOf(UUID.randomUUID()) }
 
   LaunchedEffect(uiState) {
-    // If the initial data load has not taken place, attempt to load the data.
     if (uiState is InputReadingsViewModel.UiState.Uninitialized) {
       onPermissionsResult()
     }
-
-    // The [InputReadingsScreenViewModel.UiState] provides details of whether the last action
-    // was a success or resulted in an error. Where an error occurred, for example in reading
-    // and writing to Health Connect, the user is notified, and where the error is one that can
-    // be recovered from, an attempt to do so is made.
     if (uiState is InputReadingsViewModel.UiState.Error && errorId.value != uiState.uuid) {
       onError(uiState.exception)
       errorId.value = uiState.uuid
@@ -101,6 +89,54 @@ fun InputReadingsScreen(
           }
         }
       } else {
+        item {
+          Text(
+            modifier = Modifier.padding(8.dp),
+            text = stringResource(R.string.differential_changes_title_text),
+            textAlign = TextAlign.Justify
+          )
+          Text(
+            modifier = Modifier.padding(8.dp),
+            text = stringResource(R.string.differential_changes_continuation_text),
+            textAlign = TextAlign.Justify
+          )
+        }
+        item {
+          Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+          ) {
+            Text(stringResource(R.string.differential_changes_switch_text))
+            Switch(
+              checked = changesEnabled,
+              onCheckedChange = onChangesEnable
+            )
+          }
+        }
+
+        item {
+          val token = changesToken ?: stringResource(id = R.string.not_available_abbrev)
+          Text(stringResource(id = R.string.differential_changes_current_token, token))
+        }
+
+        item {
+          Button(
+            modifier = Modifier.padding(8.dp),
+            enabled = changesEnabled,
+            onClick = onGetChanges
+          ) {
+            Text(stringResource(R.string.differential_changes_button_text))
+          }
+        }
+
+        items(changes) { changeItem ->
+          FormattedChange(changeItem)
+        }
+        if (changes.isEmpty()) {
+          item {
+            Text(stringResource(R.string.differential_changes_empty))
+          }
+        }
         item {
           Text(
             text = stringResource(id = R.string.previous_readings),
@@ -142,43 +178,3 @@ fun InputReadingsScreen(
     }
   }
 }
-
-@Preview
-@Composable
-fun InputReadingsScreenPreview() {
-  val inputTime = Instant.now()
-  HealthConnectTheme(darkTheme = false) {
-    InputReadingsScreen(
-      permissions = setOf(),
-      permissionsGranted = true,
-      weightList = listOf(
-        WeightRecord(
-          weight = Mass.kilograms(54.0),
-          time = inputTime,
-          zoneOffset = null
-        ),
-        WeightRecord(
-          weight = Mass.kilograms(55.0),
-          time = inputTime,
-          zoneOffset = null
-        )
-      ),
-      bodyFatList = listOf(
-        BodyFatRecord(
-          percentage = Percentage(42.0),
-          time = inputTime,
-          zoneOffset = null
-        ),
-        BodyFatRecord(
-          percentage = Percentage(38.0),
-          time = inputTime,
-          zoneOffset = null
-        )
-      ),
-      uiState = InputReadingsViewModel.UiState.Done
-    )
-
-  }
-}
-
-
