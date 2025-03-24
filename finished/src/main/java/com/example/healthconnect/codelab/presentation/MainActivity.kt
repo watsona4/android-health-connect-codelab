@@ -17,6 +17,7 @@ package com.example.healthconnect.codelab.presentation
 
 import android.content.Context
 import android.os.Bundle
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -27,6 +28,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.example.healthconnect.codelab.R
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsViewModel
 import java.time.Duration
 
@@ -36,13 +38,15 @@ import java.time.Duration
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    setContentView(R.layout.layout);
 
     val healthConnectManager = (application as BaseApplication).healthConnectManager
     val postManager = (application as BaseApplication).postManager
     val inputReadingsViewModel = InputReadingsViewModel(
       activity = this,
       healthConnectManager = healthConnectManager,
-      postManager = postManager
+      postManager = postManager,
+      output = findViewById(R.id.output)
     )
 
     class InputWorker(context: Context, workerParameters: WorkerParameters) :

@@ -16,6 +16,7 @@
 package com.example.healthconnect.codelab.presentation.screen.inputreadings
 
 import android.util.Log
+import android.widget.TextView
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +25,7 @@ import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.WeightRecord
+import com.example.healthconnect.codelab.R
 import com.example.healthconnect.codelab.data.HealthConnectManager
 import com.example.healthconnect.codelab.data.PostManager
 import com.example.healthconnect.codelab.presentation.MainActivity
@@ -31,14 +33,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-val PUBLISH_URL = "http://192.168.1.5:8568"
+val PUBLISH_URL = "https://home.battenkillwoodworks.com/sync"
 
 class InputReadingsViewModel(
-  private val activity: MainActivity,
+  activity: MainActivity,
   private val healthConnectManager: HealthConnectManager,
-  private val postManager : PostManager
+  private val postManager : PostManager,
+  private val output : TextView
 ) {
 
   val permissions = setOf(
@@ -69,25 +75,37 @@ class InputReadingsViewModel(
       publishBodyFatData()
   }
 
+  private fun getTime(): String {
+    val formatter = DateTimeFormatter.ofPattern("M/d/uuuu h:mm a")
+    val now = Instant.now()
+    val zoned = now.atZone(ZoneId.of("America/New_York"))
+    return zoned.format(formatter)
+  }
   private suspend fun readWeightInputs() {
+    output.append("${getTime()}: Reading weight values...\n")
     val then = Instant.ofEpochSecond(0)
     val now = Instant.now()
     weightList.value = healthConnectManager.readWeightInputs(then, now)
+    output.append("${getTime()}:     read ${weightList.value.size} weight values\n")
   }
 
   private suspend fun readBodyFatInputs() {
+    output.append("${getTime()}: Reading bodyfat values...\n")
     val then = Instant.ofEpochSecond(0)
     val now = Instant.now()
     bodyFatList.value = healthConnectManager.readBodyFatInputs(then, now)
+    output.append("${getTime()}:     read ${bodyFatList.value.size} bodyfat values\n")
   }
 
   private fun publishWeightData() {
+    output.append("${getTime()}: Publishing weight values...\n")
     val postData = JSONObject()
     weightList.value.forEach { postData.put(it.time.toString(), it.weight) }
     publishData(postData)
   }
 
   private fun publishBodyFatData() {
+    output.append("${getTime()}: Publishing bodyfat values...\n")
     val postData = JSONObject()
     bodyFatList.value.forEach { postData.put(it.time.toString(), it.percentage) }
     publishData(postData)
