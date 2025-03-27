@@ -15,26 +15,26 @@
  */
 package com.example.healthconnect.codelab.presentation
 
+import android.app.DatePickerDialog
 import android.content.Context
 import android.os.Bundle
+import android.view.View
+import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResultLauncher
-import androidx.compose.runtime.mutableStateOf
-import androidx.work.Constraints
-import androidx.work.CoroutineWorker
-import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.WorkerParameters
 import com.example.healthconnect.codelab.R
 import com.example.healthconnect.codelab.presentation.screen.inputreadings.InputReadingsViewModel
-import java.time.Duration
+import kotlinx.coroutines.runBlocking
+import java.text.SimpleDateFormat
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import java.util.Locale
 
-/**
- * The entry point into the sample.
- */
+val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
+val zoneId: ZoneId = ZoneId.of("America/New_York")
+
 class MainActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -42,31 +42,54 @@ class MainActivity : ComponentActivity() {
 
     val healthConnectManager = (application as BaseApplication).healthConnectManager
     val postManager = (application as BaseApplication).postManager
+
+    val sharedPref = getPreferences(Context.MODE_PRIVATE)
+
+    val dateView = findViewById<TextView>(R.id.dateView)
+    dateView.text = sharedPref.getString("Date", "")
+
+    findViewById<Button>(R.id.dateButton).setOnClickListener {
+      val mcurrentDate: Calendar = Calendar.getInstance()
+      var mYear = mcurrentDate.get(Calendar.YEAR)
+      var mMonth = mcurrentDate.get(Calendar.MONTH)
+      var mDay = mcurrentDate.get(Calendar.DAY_OF_MONTH)
+
+      val mDatePicker = DatePickerDialog(
+        this@MainActivity,
+        { datepicker, selectedyear, selectedmonth, selectedday ->
+          val myCalendar: Calendar = Calendar.getInstance()
+          myCalendar.set(Calendar.YEAR, selectedyear)
+          myCalendar.set(Calendar.MONTH, selectedmonth)
+          myCalendar.set(Calendar.DAY_OF_MONTH, selectedday)
+          dateView.text = myCalendar.time.toInstant().atZone(zoneId)
+            .toLocalDate().format(formatter)
+          with(sharedPref.edit()) {
+            putString("Date", dateView.text as String?)
+            apply()
+          }
+
+          mDay = selectedday
+          mMonth = selectedmonth
+          mYear = selectedyear
+        },mYear, mMonth, mDay
+      )
+      mDatePicker.show()
+    }
+
     val inputReadingsViewModel = InputReadingsViewModel(
       activity = this,
       healthConnectManager = healthConnectManager,
       postManager = postManager,
-      output = findViewById(R.id.output)
+      output = findViewById(R.id.output),
+      date = dateView
     )
 
-    class InputWorker(context: Context, workerParameters: WorkerParameters) :
-      CoroutineWorker(context, workerParameters) {
-      override suspend fun doWork(): Result {
-        inputReadingsViewModel.run()
-        return Result.success()
-      }
+    findViewById<Button>(R.id.syncButton).setOnClickListener {
+      runBlocking { inputReadingsViewModel.run() }
     }
 
-    val workConstraints = Constraints.Builder()
-      .setRequiredNetworkType(NetworkType.UNMETERED)
-      .build()
-
-    val workRequest = PeriodicWorkRequestBuilder<InputWorker>(Duration.ofMinutes(15))
-      .setConstraints(workConstraints)
-      .build()
-
-    val workManager = WorkManager.getInstance(this)
-
-    workManager.enqueue(workRequest)
+    findViewById<Button>(R.id.exitButton).setOnClickListener {
+      finish()
+    }
   }
 }

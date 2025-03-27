@@ -16,10 +16,10 @@ class PostManager(private val context: Context) {
 
         val stringRequest = object : StringRequest(Request.Method.POST, url,
             Response.Listener<String> {
-                    response -> success(response)
+                response -> success(response)
             },
             Response.ErrorListener {
-                    volleyError -> error(volleyError.toString())
+                volleyError -> error(volleyError.toString())
             })
         {
             override fun getBodyContentType(): String {

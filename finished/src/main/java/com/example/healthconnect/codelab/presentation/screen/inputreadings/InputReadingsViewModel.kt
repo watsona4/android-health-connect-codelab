@@ -16,35 +16,36 @@
 package com.example.healthconnect.codelab.presentation.screen.inputreadings
 
 import android.util.Log
+import android.widget.EditText
 import android.widget.TextView
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.WeightRecord
-import com.example.healthconnect.codelab.R
 import com.example.healthconnect.codelab.data.HealthConnectManager
 import com.example.healthconnect.codelab.data.PostManager
 import com.example.healthconnect.codelab.presentation.MainActivity
-import kotlinx.coroutines.CoroutineScope
+import com.example.healthconnect.codelab.presentation.formatter
+import com.example.healthconnect.codelab.presentation.zoneId
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
+import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.UUID
+import java.util.Locale
 
 val PUBLISH_URL = "https://home.battenkillwoodworks.com/sync"
 
 class InputReadingsViewModel(
   activity: MainActivity,
   private val healthConnectManager: HealthConnectManager,
-  private val postManager : PostManager,
-  private val output : TextView
+  private val postManager: PostManager,
+  private val output: TextView,
+  private val date: TextView
 ) {
 
   val permissions = setOf(
@@ -65,7 +66,6 @@ class InputReadingsViewModel(
 
   init {
     requestPermission.launch(permissions)
-    runBlocking { run() }
   }
 
   suspend fun run() {
@@ -76,25 +76,24 @@ class InputReadingsViewModel(
   }
 
   private fun getTime(): String {
-    val formatter = DateTimeFormatter.ofPattern("M/d/uuuu h:mm a")
-    val now = Instant.now()
-    val zoned = now.atZone(ZoneId.of("America/New_York"))
-    return zoned.format(formatter)
+    return Instant.now().atZone(zoneId).format(DateTimeFormatter
+      .ofPattern("M/d/uuuu h:mm a"))
   }
+
   private suspend fun readWeightInputs() {
-    output.append("${getTime()}: Reading weight values...\n")
-    val then = Instant.ofEpochSecond(0)
+    val then = LocalDate.parse(date.text, formatter).atStartOfDay(zoneId).toInstant()
+    output.append("${getTime()}: Reading weight values since ${date.text}...\n")
     val now = Instant.now()
     weightList.value = healthConnectManager.readWeightInputs(then, now)
-    output.append("${getTime()}:     read ${weightList.value.size} weight values\n")
+    output.append("${getTime()}:     read ${weightList.value.size/2} weight values\n")
   }
 
   private suspend fun readBodyFatInputs() {
-    output.append("${getTime()}: Reading bodyfat values...\n")
-    val then = Instant.ofEpochSecond(0)
+    val then = LocalDate.parse(date.text, formatter).atStartOfDay(zoneId).toInstant()
+    output.append("${getTime()}: Reading bodyfat values since ${date.text}...\n")
     val now = Instant.now()
     bodyFatList.value = healthConnectManager.readBodyFatInputs(then, now)
-    output.append("${getTime()}:     read ${bodyFatList.value.size} bodyfat values\n")
+    output.append("${getTime()}:     read ${bodyFatList.value.size/2} bodyfat values\n")
   }
 
   private fun publishWeightData() {
@@ -113,8 +112,14 @@ class InputReadingsViewModel(
 
   private fun publishData(postData: JSONObject) {
     postManager.performPostRequest(PUBLISH_URL, postData,
-      { success -> Log.i(TAG, success) },
-      { error -> Log.i(TAG, error) }
+      { success ->
+        output.append("${getTime()}: $success\n")
+        Log.i(TAG, success)
+      },
+      { error ->
+        output.append("${getTime()}: Error: $error\n")
+        Log.e(TAG, error)
+      }
     )
   }
 
