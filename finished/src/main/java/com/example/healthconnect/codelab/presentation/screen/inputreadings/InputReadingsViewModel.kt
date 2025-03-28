@@ -16,47 +16,36 @@
 package com.example.healthconnect.codelab.presentation.screen.inputreadings
 
 import android.util.Log
-import android.widget.EditText
-import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.BodyFatRecord
 import androidx.health.connect.client.records.WeightRecord
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.example.healthconnect.codelab.data.HealthConnectManager
 import com.example.healthconnect.codelab.data.PostManager
-import com.example.healthconnect.codelab.presentation.MainActivity
 import com.example.healthconnect.codelab.presentation.formatter
-import com.example.healthconnect.codelab.presentation.zoneId
-import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
-import java.text.SimpleDateFormat
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 val PUBLISH_URL = "https://home.battenkillwoodworks.com/sync"
 
 class InputReadingsViewModel(
-  activity: MainActivity,
+  permissionLauncher: ActivityResultLauncher<Set<String>>,
   private val healthConnectManager: HealthConnectManager,
   private val postManager: PostManager,
-  private val output: TextView,
-  private val date: TextView
-) {
+  private var output: (String) -> Unit
+): ViewModel() {
 
   val permissions = setOf(
     HealthPermission.getReadPermission(WeightRecord::class),
     HealthPermission.getReadPermission(BodyFatRecord::class),
   )
-
-  val requestPermission =
-    activity.registerForActivityResult(
-      PermissionController.createRequestPermissionResultContract()
-    ) {}
 
   var weightList: MutableState<List<WeightRecord>> = mutableStateOf(listOf())
     private set
@@ -65,46 +54,50 @@ class InputReadingsViewModel(
     private set
 
   init {
-    requestPermission.launch(permissions)
+    permissionLauncher.launch(permissions)
   }
 
-  suspend fun run() {
-      readWeightInputs()
-      readBodyFatInputs()
-      publishWeightData()
-      publishBodyFatData()
+  suspend fun run(date: ZonedDateTime) {
+    readWeightInputs(date)
+    readBodyFatInputs(date)
+    publishWeightData()
+    publishBodyFatData()
   }
 
   private fun getTime(): String {
-    return Instant.now().atZone(zoneId).format(DateTimeFormatter
+    return Instant.now().atZone(ZoneId.systemDefault()).format(DateTimeFormatter
       .ofPattern("M/d/uuuu h:mm a"))
   }
 
-  private suspend fun readWeightInputs() {
-    val then = LocalDate.parse(date.text, formatter).atStartOfDay(zoneId).toInstant()
-    output.append("${getTime()}: Reading weight values since ${date.text}...\n")
-    val now = Instant.now()
-    weightList.value = healthConnectManager.readWeightInputs(then, now)
-    output.append("${getTime()}:     read ${weightList.value.size/2} weight values\n")
+  private fun getDate(date: ZonedDateTime): String {
+    return formatter.format(date)
   }
 
-  private suspend fun readBodyFatInputs() {
-    val then = LocalDate.parse(date.text, formatter).atStartOfDay(zoneId).toInstant()
-    output.append("${getTime()}: Reading bodyfat values since ${date.text}...\n")
+  private suspend fun readWeightInputs(date: ZonedDateTime) {
+    val then = date.toInstant()
+    output("${getTime()}: Reading weight values since ${getDate(date)}...")
+    val now = Instant.now()
+    weightList.value = healthConnectManager.readWeightInputs(then, now)
+    output("${getTime()}:     read ${weightList.value.size/2} weight values")
+  }
+
+  private suspend fun readBodyFatInputs(date: ZonedDateTime) {
+    val then = date.toInstant()
+    output("${getTime()}: Reading bodyfat values since ${getDate(date)}...")
     val now = Instant.now()
     bodyFatList.value = healthConnectManager.readBodyFatInputs(then, now)
-    output.append("${getTime()}:     read ${bodyFatList.value.size/2} bodyfat values\n")
+    output("${getTime()}:     read ${bodyFatList.value.size/2} bodyfat values")
   }
 
   private fun publishWeightData() {
-    output.append("${getTime()}: Publishing weight values...\n")
+    output("${getTime()}: Publishing weight values...")
     val postData = JSONObject()
     weightList.value.forEach { postData.put(it.time.toString(), it.weight) }
     publishData(postData)
   }
 
   private fun publishBodyFatData() {
-    output.append("${getTime()}: Publishing bodyfat values...\n")
+    output("${getTime()}: Publishing bodyfat values...")
     val postData = JSONObject()
     bodyFatList.value.forEach { postData.put(it.time.toString(), it.percentage) }
     publishData(postData)
@@ -113,11 +106,11 @@ class InputReadingsViewModel(
   private fun publishData(postData: JSONObject) {
     postManager.performPostRequest(PUBLISH_URL, postData,
       { success ->
-        output.append("${getTime()}: $success\n")
+        output("${getTime()}: $success")
         Log.i(TAG, success)
       },
       { error ->
-        output.append("${getTime()}: Error: $error\n")
+        output("${getTime()}: Error: $error")
         Log.e(TAG, error)
       }
     )
@@ -125,5 +118,24 @@ class InputReadingsViewModel(
 
   companion object {
     private val TAG: String = InputReadingsViewModel::class.java.simpleName
+  }
+}
+
+class InputReadingsViewModelFactory(
+  private val permissionLauncher: ActivityResultLauncher<Set<String>>,
+  private val healthConnectManager: HealthConnectManager,
+  private val postManager: PostManager,
+  private val output: (String) -> Unit
+) : ViewModelProvider.Factory {
+  override fun <T : ViewModel> create(modelClass: Class<T>): T {
+    if (modelClass.isAssignableFrom(InputReadingsViewModel::class.java)) {
+      @Suppress("UNCHECKED_CAST")
+      return InputReadingsViewModel(
+        permissionLauncher,
+        healthConnectManager,
+        postManager,
+        output) as T
+    }
+    throw IllegalArgumentException("Unknown ViewModel class")
   }
 }
