@@ -1,6 +1,7 @@
 package com.example.healthconnect.codelab.presentation
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -14,16 +15,21 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = PRE
 
 class Preferences(private val context: Context) {
 
-    private val startDateKey = longPreferencesKey("start_date")
-
-    suspend fun writeToDataStore(value: Long) {
+    suspend fun <T> writeToDataStore(key: Preferences.Key<T>, value: T) {
         context.dataStore.edit { preferences ->
-            preferences[startDateKey] = value
+            Log.d(TAG, "writeToDataStore: $value")
+            preferences[key] = value
         }
     }
 
-    suspend fun readFromDataStore(): Long {
+    suspend fun <T> readFromDataStore(key: Preferences.Key<T>): T? {
         val preferences = context.dataStore.data.first()
-        return preferences[startDateKey] ?: 0L
+        Log.d(TAG, "readFromDataStore: ${preferences[key]}")
+        return preferences[key]
+    }
+
+    companion object {
+        val START_DATE = longPreferencesKey("start_date")
+        private const val TAG = "Preferences"
     }
 }

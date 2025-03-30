@@ -19,9 +19,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -40,7 +41,6 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.health.connect.client.PermissionController
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.healthconnect.codelab.R
@@ -74,14 +75,14 @@ class MainActivity : ComponentActivity() {
 
   private fun saveData(value: Long) {
     lifecycleScope.launch {
-      prefs.writeToDataStore(value)
+      prefs.writeToDataStore(Preferences.START_DATE, value)
     }
   }
 
   private fun readData(): LiveData<Long> {
     val liveData = MutableLiveData<Long>()
     lifecycleScope.launch {
-      liveData.value = prefs.readFromDataStore()
+      liveData.value = prefs.readFromDataStore(Preferences.START_DATE)
     }
     return liveData
   }
@@ -96,9 +97,8 @@ class MainActivity : ComponentActivity() {
     val textState = mutableStateOf("")
 
     setContent {
-      val coroutineScope = rememberCoroutineScope()
       var showDatePicker by remember { mutableStateOf(false) }
-      val datePickerState = rememberDatePickerState(initialSelectedDateMillis = readData().value)
+      val datePickerState = rememberDatePickerState()
       val millisToLocalDate = datePickerState.selectedDateMillis?.let {
         Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC)
           .toLocalDate().atStartOfDay(ZoneId.systemDefault())
@@ -107,6 +107,10 @@ class MainActivity : ComponentActivity() {
         formatter.format(it)
       } ?: "Select Start Date"
       val builder = StringBuilder()
+      val dateObserver = Observer<Long> {
+        datePickerState.selectedDateMillis = it
+      }
+      readData().observe(this, dateObserver)
       val viewModel: InputReadingsViewModel = viewModel(
         factory = InputReadingsViewModelFactory(
           permissionLauncher = requestPermission,
@@ -161,38 +165,40 @@ class MainActivity : ComponentActivity() {
               .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
           ) {
-            Text(
-              modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = { showDatePicker = true }),
-              text = dateToString,
-              textAlign = TextAlign.Center,
-            )
-            if (showDatePicker) {
-              DatePickerDialog(
-                onDismissRequest = { showDatePicker = false },
-                confirmButton = {
-                  Button(
-                    onClick = {
-                      datePickerState.selectedDateMillis?.let { saveData(it) }
-                      showDatePicker = false
+            Row (horizontalArrangement = Arrangement.Center){
+              Text(text = "Start Date: ")
+              Text(
+                modifier = Modifier
+                  .clickable(onClick = { showDatePicker = true }),
+                text = dateToString,
+                textAlign = TextAlign.Center,
+              )
+              if (showDatePicker) {
+                DatePickerDialog(
+                  onDismissRequest = { showDatePicker = false },
+                  confirmButton = {
+                    Button(
+                      onClick = {
+                        datePickerState.selectedDateMillis?.let { saveData(it) }
+                        showDatePicker = false
+                      }
+                    ) {
+                      Text(text = "OK")
                     }
-                  ) {
-                    Text(text = "OK")
+                  },
+                  dismissButton = {
+                    Button(
+                      onClick = { showDatePicker = false }
+                    ) {
+                      Text(text = "Cancel")
+                    }
                   }
-                },
-                dismissButton = {
-                  Button(
-                    onClick = { showDatePicker = false }
-                  ) {
-                    Text(text = "Cancel")
-                  }
+                ) {
+                  DatePicker(
+                    state = datePickerState,
+                    showModeToggle = true
+                  )
                 }
-              ) {
-                DatePicker(
-                  state = datePickerState,
-                  showModeToggle = true
-                )
               }
             }
             Text(text = textState.value)
