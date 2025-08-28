@@ -82,8 +82,10 @@ class MainActivity : ComponentActivity() {
   private fun readData(): LiveData<Long> {
     val liveData = MutableLiveData<Long>()
     lifecycleScope.launch {
-      liveData.value = prefs.readFromDataStore(Preferences.START_DATE)
-    }
+      val value = prefs.readFromDataStore(Preferences.START_DATE)
+      if (value != null )
+        liveData.postValue(value!!)
+  }
     return liveData
   }
 
@@ -108,7 +110,8 @@ class MainActivity : ComponentActivity() {
       } ?: "Select Start Date"
       val builder = StringBuilder()
       val dateObserver = Observer<Long> {
-        datePickerState.selectedDateMillis = it
+        if (!showDatePicker)
+          datePickerState.selectedDateMillis = it
       }
       readData().observe(this, dateObserver)
       val viewModel: InputReadingsViewModel = viewModel(
@@ -165,7 +168,7 @@ class MainActivity : ComponentActivity() {
               .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
           ) {
-            Row (horizontalArrangement = Arrangement.Center){
+            Row (horizontalArrangement = Arrangement.Center) {
               Text(text = "Start Date: ")
               Text(
                 modifier = Modifier

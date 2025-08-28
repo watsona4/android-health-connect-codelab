@@ -78,7 +78,7 @@ class InputReadingsViewModel(
     output("${getTime()}: Reading weight values since ${getDate(date)}...")
     val now = Instant.now()
     weightList.value = healthConnectManager.readWeightInputs(then, now)
-    output("${getTime()}:     read ${weightList.value.size/2} weight values")
+    output("${getTime()}:     read ${weightList.value.size} weight values")
   }
 
   private suspend fun readBodyFatInputs(date: ZonedDateTime) {
@@ -86,7 +86,7 @@ class InputReadingsViewModel(
     output("${getTime()}: Reading bodyfat values since ${getDate(date)}...")
     val now = Instant.now()
     bodyFatList.value = healthConnectManager.readBodyFatInputs(then, now)
-    output("${getTime()}:     read ${bodyFatList.value.size/2} bodyfat values")
+    output("${getTime()}:     read ${bodyFatList.value.size} bodyfat values")
   }
 
   private fun publishWeightData() {

@@ -1,6 +1,7 @@
 package com.example.healthconnect.codelab.data
 
 import android.content.Context
+import com.android.volley.DefaultRetryPolicy
 import com.android.volley.Request
 import com.android.volley.Response
 import com.android.volley.toolbox.StringRequest
@@ -30,6 +31,15 @@ class PostManager(private val context: Context) {
                 return postData.toString().toByteArray(Charsets.UTF_8)
             }
         }
+
+        val maxNumRetries = 5
+        stringRequest.setRetryPolicy(
+            DefaultRetryPolicy(
+                DefaultRetryPolicy.DEFAULT_TIMEOUT_MS,
+                maxNumRetries,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT,
+            )
+        )
 
         requestQueue.add(stringRequest)
     }
